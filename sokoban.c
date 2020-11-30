@@ -321,7 +321,7 @@ int main(int argc, char **argv) {
 	// Main loop: repeatedly show game board, ask user for a move, apply
 	// the move to the board state, check if goal state reached, then 
 	// visualize board again.
-	while(true) {
+	while(n_moves < MAX_MOVES) {
 		char *viz = board_to_string(board);
 		printf("\n%s\n", viz);
 		if(is_goal_state(board)) {
