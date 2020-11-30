@@ -273,10 +273,9 @@ state_t board_from_file(char *path) {
  * ************************************************************************** */
 
 /**
- * Get action from user input (w, a, s, d, q). Return false if the user wants
- * to quit the game (input q).
+ * Get action from user input (w, a, s, d, q). 
  */
-bool action_input(coord_t *action) {
+int action_input(coord_t *action) {
 	int input;
 	do {
 		input = getchar();
@@ -284,7 +283,7 @@ bool action_input(coord_t *action) {
 	action->x = 0;
 	action->y = 0;
 	if(input == 'q') {
-		return false;
+		return input;
 	} else if(input == 'w') {
 		action->y = -1;
 	} else if(input == 'a') {
@@ -294,42 +293,62 @@ bool action_input(coord_t *action) {
 	} else if(input == 'd') {
 		action->x = +1;
 	}
-	return true;
+	return input;
 }
 
 /**
  * Main
  */
+#define MAX_MOVES 4095
 int main(int argc, char **argv) {
+
+	// Print usage info.
 	if(argc != 2) {
-		fprintf(stderr, "Require input Sokoban board text file.\n");
+		fprintf(stderr, "Usage: %s LEVEL\n", argv[0]);
+		fprintf(stderr, "    LEVEL: Path to Sokoban level text file.");
 		return 1;
 	}
+
+	// Read in level to a new board.
 	char *path = argv[1];
 	state_t board = board_from_file(path);
 	int input;
+
+	// Keep track of moves made to show in the end.
 	unsigned int n_moves = 0;
+	char moves[MAX_MOVES+1];
+
+	// Main loop: repeatedly show game board, ask user for a move, apply
+	// the move to the board state, check if goal state reached, then 
+	// visualize board again.
 	while(true) {
 		char *viz = board_to_string(board);
 		printf("\n%s\n", viz);
 		if(is_goal_state(board)) {
-			printf("Congratulations!\n");
+			printf("Congratulations! You won after %d moves:\n%s\n",
+				n_moves, moves);
 			break;
 		}
+		int input;
 		coord_t action;
 		do {
+			// Repeatedly ask user for a move until they make a 
+			// legal one or quit the game.
 			printf("[%d] Make a move (w=up, a=left, s=down, d=right, q=quit): ", n_moves);
-			bool got_action = action_input(&action);
+			input = action_input(&action);
 			printf("\n");
-			if(!got_action) {
-				printf("Goodbye.\n");
+			if(input == 'q') {
+				printf("You gave up after %d moves:\n%s\nGoodbye.\n",
+				       n_moves, moves);
 				exit(1);
 			}
 			if(!is_action_legal(board, action)) {
 				printf("Illegal action. Please retry.\n");
 			}
 		} while(!is_action_legal(board, action));
+		moves[n_moves] = (char)input;
 		n_moves += 1;
+		moves[n_moves] = '\0';
 		take_action(&board, action);
 	};
 	return 0;
