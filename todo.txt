@@ -1,0 +1,6 @@
+# TODO
+
+* Implement A* and heuristic
+* Add malloc error checks
+* Better error handling than just asserts
+* Add unit tests
