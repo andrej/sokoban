@@ -8,6 +8,7 @@
 #include "game.cpp"
 #include "search.cpp"
 #include "heuristic.cpp"
+#include "mincostheuristic.cpp"
 #include "io.cpp"
 
 /** 
@@ -65,7 +66,7 @@ int main(int argc, char **argv) {
 	unsigned int n_moves = 0;
 	char moves[MAX_MOVES+1];
 
-	SimpleHeuristic heur;
+	MinCostHeuristic heur;
 
 	// Main loop: repeatedly show game board, ask user for a move, apply
 	// the move to the board state, check if goal state reached, then 
