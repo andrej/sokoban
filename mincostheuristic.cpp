@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <map>
+#include <vector>
 #include <iostream>
 #include "game.cpp"
 #include "search.cpp"
@@ -20,6 +21,7 @@ struct MinCostHeuristic: Heuristic
 	matrix<int> reverse_directed_graph;
 	std::map<int, Coord> key_to_coord;
 	std::map<Coord, int> coord_to_key;
+	std::vector<int> goal_keys;
 
     MinCostHeuristic() : Heuristic()
 	{
@@ -45,6 +47,10 @@ struct MinCostHeuristic: Heuristic
 			{
 				key_to_coord.insert({game.board.get_index(Coord(i, j)), Coord(i, j)});
 				coord_to_key.insert({Coord(i, j), game.board.get_index(Coord(i, j))});
+				if (game.board.get_field(Coord(i, j)) == 4)
+				{
+					goal_keys.push_back(coord_to_key.at(Coord(i, j)));
+				}
 			}
 		}
 		//display_key_to_coord(game);
