@@ -37,6 +37,9 @@ struct Coord {
 	bool operator==(const Coord &b) const {
 		return this->x == b.x && this->y == b.y;
 	}
+	bool operator<(const Coord &b) const {
+		return x < b.x || (x == b.x && y < b.y);
+	}
 };
 
 

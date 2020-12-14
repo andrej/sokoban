@@ -10,6 +10,8 @@
 #include "search.cpp"
 #include "io.cpp"
 
+//2147483647
+
 using namespace boost::numeric::ublas;
 
 struct MinCostHeuristic: Heuristic
@@ -17,18 +19,20 @@ struct MinCostHeuristic: Heuristic
     bool start;
 	matrix<int> reverse_directed_graph;
 	std::map<int, Coord> key_to_coord;
+	std::map<Coord, int> coord_to_key;
 
     MinCostHeuristic() : Heuristic()
 	{
 		start = true;
 	}
 
-	void display_key_to_coord()
+	void display_key_to_coord(State &state)
 	{
+		Game &game = static_cast<Game &>(state);
 		std::cout << "KEY TO COORD\n";
 		for (auto& e: key_to_coord)
 		{
-			std::cout << e.first << "=>(" << e.second.x << ',' << e.second.y << ")\n";
+			std::cout << e.first << "=>(" << e.second.x << ',' << e.second.y << ")=>" << game.board.get_field(e.second) << '\n';
 		}
 	}
 
@@ -40,9 +44,71 @@ struct MinCostHeuristic: Heuristic
 			for (int j = 0; j < game.board.dimensions.y; ++j)
 			{
 				key_to_coord.insert({game.board.get_index(Coord(i, j)), Coord(i, j)});
+				coord_to_key.insert({Coord(i, j), game.board.get_index(Coord(i, j))});
 			}
 		}
-		//display_key_to_coord();
+		//display_key_to_coord(game);
+	}
+
+	void display_reverse_directed_graph()
+	{
+		for (unsigned i = 0; i < reverse_directed_graph.size1(); ++i)
+		{
+			for (unsigned j = 0; j < reverse_directed_graph.size2(); ++j)
+			{
+				if (reverse_directed_graph(i, j) != 1) 
+				{
+					//std::cout << '-';
+				}
+				else 
+				{
+					Coord c1 = key_to_coord.at(j);
+					Coord c2 = key_to_coord.at(i);
+					std::cout << '(' << c1.x << ',' << c1.y << ")=>(" << c2.x << ',' << c2.y << ")\n";
+					//std::cout << reverse_directed_graph(i, j);
+				}				
+			}
+			//std::cout << '\n';
+		}
+	}
+
+	void build_reverse_directed_graph(State &state)
+	{
+		Game &game = static_cast<Game &>(state);
+		int d = key_to_coord.size();
+		reverse_directed_graph = matrix<int>(d, d);
+		for (unsigned i = 0; i < reverse_directed_graph.size1(); ++i)
+		{
+			for (unsigned j = 0; j < reverse_directed_graph.size2(); ++j)
+			{
+				reverse_directed_graph(i, j) = +INFINITY;
+			}
+		}
+		for (auto& e: key_to_coord)
+		{
+			int x = e.second.x;
+			int y = e.second.y;
+
+			if (game.board.get_field(e.second) != 1)
+			{
+				//Coord above = Coord(x, y-1);
+				//Coord below = Coord(x, y+1);
+				//Coord left = Coord(x-1, y);
+				//Coord right = Coord(x+1, y);	
+
+				if (y > 0 && y < game.board.dimensions.y && (game.board.get_field(Coord(x, y+1)) == 0 || game.board.get_field(Coord(x, y+1)) == 2 || game.board.get_field(Coord(x, y+1)) == 4) && (game.board.get_field(Coord(x, y-1)) == 0 || game.board.get_field(Coord(x, y-1)) == 2 || game.board.get_field(Coord(x, y-1)) == 4))
+				{
+					reverse_directed_graph(coord_to_key.at(Coord(x, y+1)), e.first) = 1;
+					reverse_directed_graph(coord_to_key.at(Coord(x, y-1)), e.first) = 1;
+				}
+				if (x > 0 && x < game.board.dimensions.x && (game.board.get_field(Coord(x+1, y)) == 0 || game.board.get_field(Coord(x+1, y)) == 2 || game.board.get_field(Coord(x+1, y)) == 4) && (game.board.get_field(Coord(x-1, y)) == 0 || game.board.get_field(Coord(x-1, y)) == 2 || game.board.get_field(Coord(x-1, y)) == 4))
+				{
+					reverse_directed_graph(coord_to_key.at(Coord(x+1, y)), e.first) = 1;
+					reverse_directed_graph(coord_to_key.at(Coord(x-1, y)), e.first) = 1;
+				}				
+			}
+		}
+		//display_reverse_directed_graph();
 	}
 
 	double operator()(State &state) {
@@ -55,6 +121,7 @@ struct MinCostHeuristic: Heuristic
 		{
 			start = false;
 			build_key_to_coord(game);
+			build_reverse_directed_graph(game);
 			std::cout << board_to_string(game);
 			return +INFINITY;
 		}
