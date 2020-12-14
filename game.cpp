@@ -22,6 +22,12 @@ struct State {
 struct Coord {
 	int x;
 	int y;
+	Coord() {}
+	Coord(int x, int y)
+	{
+		this->x = x;
+		this->y = y;
+	}
 	Coord operator+(const Coord &b) {
 		Coord res;
 		res.x = this->x + b.x;

@@ -3,16 +3,62 @@
 
 #include <cmath>
 #include <algorithm>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <map>
+#include <iostream>
 #include "game.cpp"
 #include "search.cpp"
+#include "io.cpp"
+
+using namespace boost::numeric::ublas;
 
 struct MinCostHeuristic: Heuristic
 {
+    bool start;
+	matrix<int> reverse_directed_graph;
+	std::map<int, Coord> key_to_coord;
+
+    MinCostHeuristic() : Heuristic()
+	{
+		start = true;
+	}
+
+	void display_key_to_coord()
+	{
+		std::cout << "KEY TO COORD\n";
+		for (auto& e: key_to_coord)
+		{
+			std::cout << e.first << "=>(" << e.second.x << ',' << e.second.y << ")\n";
+		}
+	}
+
+	void build_key_to_coord(State &state)
+	{	
+		Game &game = static_cast<Game &>(state);
+		for (int i = 0; i < game.board.dimensions.x; ++i)
+		{
+			for (int j = 0; j < game.board.dimensions.y; ++j)
+			{
+				key_to_coord.insert({game.board.get_index(Coord(i, j)), Coord(i, j)});
+			}
+		}
+		//display_key_to_coord();
+	}
+
 	double operator()(State &state) {
 		Game &game = static_cast<Game &>(state);
 		if(game.is_goal()) {
 			return 0;
 		}
+
+		if(start)
+		{
+			start = false;
+			build_key_to_coord(game);
+			std::cout << board_to_string(game);
+			return +INFINITY;
+		}
+		throw "STOP";
 		double player_to_box = +INFINITY;
 		double box_to_goal = +INFINITY;
 		for(int x0 = 0; x0 < game.board.dimensions.x; x0++) {
