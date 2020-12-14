@@ -6,6 +6,7 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <map>
 #include <vector>
+#include <queue>
 #include <iostream>
 #include "game.cpp"
 #include "search.cpp"
@@ -22,6 +23,7 @@ struct MinCostHeuristic: Heuristic
 	std::map<int, Coord> key_to_coord;
 	std::map<Coord, int> coord_to_key;
 	std::vector<int> goal_keys;
+	std::vector<std::map<int, int>> distances_to_goals;
 
     MinCostHeuristic() : Heuristic()
 	{
@@ -117,6 +119,90 @@ struct MinCostHeuristic: Heuristic
 		//display_reverse_directed_graph();
 	}
 
+	// void initialize_distances_matrix(int key)
+	// {
+	// 	int d = key_to_coord.size();
+	// 	distances_to_goals.at(key) = matrix<int>(d, d);
+	// 	for (unsigned i = 0; i < distances_to_goals.at(key).size1(); ++i)
+	// 	{
+	// 		for (unsigned j = 0; j < distances_to_goals.at(key).size2(); ++j)
+	// 		{
+	// 			distances_to_goals.at(key)(i, j) = +INFINITY;
+	// 		}
+	// 	}
+	// }
+
+	std::vector<int> get_children(int key)
+	{
+		std::vector<int> children;
+		for (unsigned i = 0; i < reverse_directed_graph.size2(); ++i)
+		{
+			if (reverse_directed_graph(key, i) == 1)
+			{
+				children.push_back(i);
+			}
+		}
+		return children;
+	}
+
+	void display_distances_to_goals()
+	{
+		for (auto& e: distances_to_goals.at(0))
+		{
+			Coord c = key_to_coord.at(e.first);
+			std::cout << '(' << c.x << ',' << c.y << ")=>" << e.second;
+		}		
+	}
+
+	void build_distances_to_goals()
+	{
+		std::cout << "Begin distances to goals\n";
+		//Game &game = static_cast<Game &>(state);
+		for (std::vector<int>::iterator it = goal_keys.begin(); it < goal_keys.end(); it++)
+		{
+			std::cout << "Entered goals loop\n";
+			//int x = key_to_coord.at(*it).x;
+			//int y = key_to_coord.at(*it).y;
+
+			// initialize_distances_matrix(*it);
+
+			std::queue<int> frontier;
+			frontier.push(*it);
+			std::cout << "After init queue\n";
+
+			std::map<int, bool> visited;
+			for (auto& e: key_to_coord)
+			{
+				visited.insert({e.first, false});
+			}
+			std::cout << "After init visited map\n";
+
+			std::map<int, int> level;
+			level.insert({*it, 0});
+
+			std::cout << "Right after first node\n";
+			while (!frontier.empty())
+			{
+				int tile = frontier.front();
+				frontier.pop();
+
+				if (!visited.at(tile))
+				{
+					visited.at(tile) = true;
+					std::cout << "Is the problem here?\n";
+					std::vector<int> children = get_children(tile);
+					for (std::vector<int>::iterator itr = children.begin(); itr < children.end(); itr++)
+					{
+						level.insert({*itr, level.at(tile)+1});
+						frontier.push(*itr);
+					}
+				}
+			}
+			distances_to_goals.push_back(level);
+		}
+		//display_distances_to_goals();
+	}
+
 	double operator()(State &state) {
 		Game &game = static_cast<Game &>(state);
 		if(game.is_goal()) {
@@ -128,6 +214,7 @@ struct MinCostHeuristic: Heuristic
 			start = false;
 			build_key_to_coord(game);
 			build_reverse_directed_graph(game);
+			build_distances_to_goals();
 			std::cout << board_to_string(game);
 			return +INFINITY;
 		}
