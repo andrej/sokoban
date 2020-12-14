@@ -23,7 +23,9 @@ struct MinCostHeuristic: Heuristic
 	std::map<int, Coord> key_to_coord;
 	std::map<Coord, int> coord_to_key;
 	std::vector<int> goal_keys;
+	std::vector<int> box_keys;
 	std::vector<std::map<int, int>> distances_to_goals;
+	matrix<int> box_goal_adjacency;
 
     MinCostHeuristic() : Heuristic()
 	{
@@ -52,6 +54,10 @@ struct MinCostHeuristic: Heuristic
 				if (game.board.get_field(Coord(i, j)) == 4)
 				{
 					goal_keys.push_back(coord_to_key.at(Coord(i, j)));
+				}
+				if (game.board.get_field(Coord(i, j)) == 2)
+				{
+					box_keys.push_back(coord_to_key.at(Coord(i, j)));
 				}
 			}
 		}
