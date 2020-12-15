@@ -8,6 +8,7 @@
 #include <vector>
 #include <queue>
 #include <iostream>
+#include <algorithm>
 #include "game.cpp"
 #include "search.cpp"
 #include "io.cpp"
@@ -26,6 +27,8 @@ struct MinCostHeuristic: Heuristic
 	std::vector<int> box_keys;
 	std::vector<std::map<int, int>> distances_to_goals;
 	matrix<int> box_goal_adjacency;
+	std::map<int, int> goal_graph_to_adj_key;
+	std::map<int, int> box_graph_to_adj_key;
 
     MinCostHeuristic() : Heuristic()
 	{
@@ -39,6 +42,16 @@ struct MinCostHeuristic: Heuristic
 		for (auto& e: key_to_coord)
 		{
 			std::cout << e.first << "=>(" << e.second.x << ',' << e.second.y << ")=>" << game.board.get_field(e.second) << '\n';
+		}
+	}
+
+	void display_coord_to_key(State &state)
+	{
+		Game &game = static_cast<Game &>(state);
+		std::cout << "COORD TO KEY\n";
+		for (auto& e: coord_to_key)
+		{
+			std::cout << e.second << "=>(" << e.first.x << ',' << e.first.y << ")=>" << game.board.get_field(e.first) << '\n';
 		}
 	}
 
@@ -62,6 +75,36 @@ struct MinCostHeuristic: Heuristic
 			}
 		}
 		//display_key_to_coord(game);
+	}
+
+	bool update_box_keys(State& state)
+	{
+		std::vector<int> new_box_keys;
+		bool box_moved = false;
+		Game &game = static_cast<Game &>(state);
+		for (int i = 0; i < game.board.dimensions.x; ++i)
+		{
+			for (int j = 0; j < game.board.dimensions.y; ++j)
+			{
+				if (game.board.get_field(Coord(i, j)) == 2)
+				{
+					new_box_keys.push_back(coord_to_key.at(Coord(i, j)));
+					if (std::find(box_keys.begin(), box_keys.end(), coord_to_key.at(Coord(i, j))) == box_keys.end())
+					{
+						box_moved = true;
+					}
+				}
+			}
+		}
+		if (box_moved)
+		{
+			box_keys = new_box_keys;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	void display_reverse_directed_graph()
@@ -88,6 +131,7 @@ struct MinCostHeuristic: Heuristic
 
 	void build_reverse_directed_graph(State &state)
 	{
+		//std::cout << "Entered build_reverse_directed_graph\n";
 		Game &game = static_cast<Game &>(state);
 		int d = key_to_coord.size();
 		reverse_directed_graph = matrix<int>(d, d);
@@ -98,10 +142,13 @@ struct MinCostHeuristic: Heuristic
 				reverse_directed_graph(i, j) = +INFINITY;
 			}
 		}
+		//std::cout << "DIMS: " << game.board.dimensions.x << ',' << game.board.dimensions.y << '\n';
+		//std::cout << "Initializes matrix\n";
 		for (auto& e: key_to_coord)
 		{
 			int x = e.second.x;
 			int y = e.second.y;
+			//std::cout << "for (" << x << ',' << y << ")\n";
 
 			if (game.board.get_field(e.second) != 1)
 			{
@@ -110,14 +157,18 @@ struct MinCostHeuristic: Heuristic
 				//Coord left = Coord(x-1, y);
 				//Coord right = Coord(x+1, y);	
 
-				if (y > 0 && y < game.board.dimensions.y && (game.board.get_field(Coord(x, y+1)) == 0 || game.board.get_field(Coord(x, y+1)) == 2 || game.board.get_field(Coord(x, y+1)) == 4) && (game.board.get_field(Coord(x, y-1)) == 0 || game.board.get_field(Coord(x, y-1)) == 2 || game.board.get_field(Coord(x, y-1)) == 4))
+				if (y > 0 && y < game.board.dimensions.y - 1 && (game.board.get_field(Coord(x, y+1)) == 0 || game.board.get_field(Coord(x, y+1)) == 2 || game.board.get_field(Coord(x, y+1)) == 4) && (game.board.get_field(Coord(x, y-1)) == 0 || game.board.get_field(Coord(x, y-1)) == 2 || game.board.get_field(Coord(x, y-1)) == 4))
 				{
+					//std::cout << "First\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x, y+1)), e.first) = 1;
+					//std::cout << "Second\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x, y-1)), e.first) = 1;
 				}
-				if (x > 0 && x < game.board.dimensions.x && (game.board.get_field(Coord(x+1, y)) == 0 || game.board.get_field(Coord(x+1, y)) == 2 || game.board.get_field(Coord(x+1, y)) == 4) && (game.board.get_field(Coord(x-1, y)) == 0 || game.board.get_field(Coord(x-1, y)) == 2 || game.board.get_field(Coord(x-1, y)) == 4))
+				if (x > 0 && x < game.board.dimensions.x - 1 && (game.board.get_field(Coord(x+1, y)) == 0 || game.board.get_field(Coord(x+1, y)) == 2 || game.board.get_field(Coord(x+1, y)) == 4) && (game.board.get_field(Coord(x-1, y)) == 0 || game.board.get_field(Coord(x-1, y)) == 2 || game.board.get_field(Coord(x-1, y)) == 4))
 				{
+					//std::cout << "Third\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x+1, y)), e.first) = 1;
+					//std::cout << "Fourth\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x-1, y)), e.first) = 1;
 				}				
 			}
@@ -162,11 +213,11 @@ struct MinCostHeuristic: Heuristic
 
 	void build_distances_to_goals()
 	{
-		std::cout << "Begin distances to goals\n";
+		//std::cout << "Begin distances to goals\n";
 		//Game &game = static_cast<Game &>(state);
 		for (std::vector<int>::iterator it = goal_keys.begin(); it < goal_keys.end(); it++)
 		{
-			std::cout << "Entered goals loop\n";
+			//std::cout << "Entered goals loop\n";
 			//int x = key_to_coord.at(*it).x;
 			//int y = key_to_coord.at(*it).y;
 
@@ -174,19 +225,19 @@ struct MinCostHeuristic: Heuristic
 
 			std::queue<int> frontier;
 			frontier.push(*it);
-			std::cout << "After init queue\n";
+			//std::cout << "After init queue\n";
 
 			std::map<int, bool> visited;
 			for (auto& e: key_to_coord)
 			{
 				visited.insert({e.first, false});
 			}
-			std::cout << "After init visited map\n";
+			//std::cout << "After init visited map\n";
 
 			std::map<int, int> level;
 			level.insert({*it, 0});
 
-			std::cout << "Right after first node\n";
+			//std::cout << "Right after first node\n";
 			while (!frontier.empty())
 			{
 				int tile = frontier.front();
@@ -195,7 +246,7 @@ struct MinCostHeuristic: Heuristic
 				if (!visited.at(tile))
 				{
 					visited.at(tile) = true;
-					std::cout << "Is the problem here?\n";
+					//std::cout << "Is the problem here?\n";
 					std::vector<int> children = get_children(tile);
 					for (std::vector<int>::iterator itr = children.begin(); itr < children.end(); itr++)
 					{
@@ -209,6 +260,85 @@ struct MinCostHeuristic: Heuristic
 		//display_distances_to_goals();
 	}
 
+	void display_box_goal_adjacency()
+	{
+		std::cout << "Box-Goal Adjacency Matrix\n";
+		for (unsigned i = 0; i < box_goal_adjacency.size1(); ++i)
+		{
+			for (unsigned j = 0; j < box_goal_adjacency.size2(); ++j)
+			{
+				if (box_goal_adjacency(i, j) == 2147483647)
+				{
+					std::cout << "_inf";
+				}	
+				else 
+				{
+					std::cout << '_' << box_goal_adjacency(i, j);
+				}
+			}
+			std::cout << '\n';
+		}
+	}
+
+	void build_box_goal_adjacency(State& state)
+	{
+		//std::cout << "Entered build_box_goal_adjacency\n";
+		Game &game = static_cast<Game &>(state);
+		box_goal_adjacency = matrix<int>(box_keys.size(), goal_keys.size());
+		//std::cout << "Created box-goal matrix\n";
+		for (unsigned i = 0; i < goal_keys.size(); i++)
+		{
+			goal_graph_to_adj_key.insert({goal_keys.at(i), i});
+		}
+		for (unsigned i = 0; i < box_keys.size(); i++)
+		{
+			box_graph_to_adj_key.insert({box_keys.at(i), i});
+		}
+		//std::cout << "Initialized graph_to_adj maps\n";
+		
+		for (unsigned g = 0; g < goal_keys.size(); g++)
+		{
+			//std::cout << "For goal:" << g << '\n';
+			for (unsigned b = 0; b < box_keys.size(); b++)
+			{
+				//std::cout << "For box:" << b << '\n';
+				Coord box_coord = key_to_coord.at(box_keys.at(b));
+				Coord goal_coord = key_to_coord.at(goal_keys.at(g));
+
+				int box_graph_key = game.board.get_index(box_coord);
+				int goal_graph_key = game.board.get_index(goal_coord);
+
+				if (box_graph_to_adj_key.find(box_graph_key) != box_graph_to_adj_key.end())
+				{
+					box_graph_to_adj_key.at(box_graph_key) = b;
+				}
+				else
+				{
+					box_graph_to_adj_key.insert({box_graph_key, b});
+				}
+				if (goal_graph_to_adj_key.find(goal_graph_key) != goal_graph_to_adj_key.end())
+				{
+					goal_graph_to_adj_key.at(goal_graph_key) = g;
+				}
+				else
+				{
+					goal_graph_to_adj_key.insert({goal_graph_key, g});
+				}
+
+				if (distances_to_goals.at(g).find(box_graph_key) != distances_to_goals.at(g).end())
+				{
+					int dist = distances_to_goals.at(g).at(box_graph_key);
+					box_goal_adjacency(b, g) = dist;
+				}
+				else
+				{
+					box_goal_adjacency(b, g) = 2147483647;
+				}				
+			}			
+		}
+		display_box_goal_adjacency();
+	}
+
 	double operator()(State &state) {
 		Game &game = static_cast<Game &>(state);
 		if(game.is_goal()) {
@@ -219,8 +349,14 @@ struct MinCostHeuristic: Heuristic
 		{
 			start = false;
 			build_key_to_coord(game);
+			//std::cout << "Built key_to_coord\n";
+			//display_coord_to_key(game);
 			build_reverse_directed_graph(game);
+			//std::cout << "Built reverse_directed_graph\n";
 			build_distances_to_goals();
+			//std::cout << "Built distances_to_goals\n";
+			build_box_goal_adjacency(game);
+			//std::cout << "Built box_goal_adjacency\n";
 			std::cout << board_to_string(game);
 			return +INFINITY;
 		}
