@@ -12,6 +12,8 @@
 #include "game.cpp"
 #include "search.cpp"
 #include "io.cpp"
+#include "Hungarian.h"
+#include "Hungarian.cpp"
 
 //2147483647
 
@@ -341,7 +343,22 @@ struct MinCostHeuristic: Heuristic
 
 	void minimum_cost()
 	{
+		std::vector<std::vector<double>> cost_matrix;
+		for (unsigned i = 0; i < box_goal_adjacency.size1(); ++i)
+		{
+			std::vector<double> cost_row;
+			for (unsigned j = 0; j < box_goal_adjacency.size2(); ++j)
+			{
+				//std::cout << "Adding entries\n";
+				cost_row.push_back(box_goal_adjacency(i, j));
+			}
+			cost_matrix.push_back(cost_row);
+		}
+		std::vector<int> assignment;
+		HungarianAlgorithm hungarian;
 
+		double cost = hungarian.Solve(cost_matrix, assignment);
+		std::cout << "Cost: " << cost << '\n';
 	}
 
 	double operator()(State &state) {
@@ -362,6 +379,7 @@ struct MinCostHeuristic: Heuristic
 			//std::cout << "Built distances_to_goals\n";
 			build_box_goal_adjacency(game);
 			//std::cout << "Built box_goal_adjacency\n";
+			minimum_cost();
 			std::cout << board_to_string(game);
 			return +INFINITY;
 		}
