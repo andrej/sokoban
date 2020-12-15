@@ -99,6 +99,8 @@ struct MinCostHeuristic: Heuristic
 				}
 			}
 		}
+		// box_keys = new_box_keys;
+		// return false;
 		if (box_moved)
 		{
 			box_keys = new_box_keys;
@@ -160,14 +162,14 @@ struct MinCostHeuristic: Heuristic
 				//Coord left = Coord(x-1, y);
 				//Coord right = Coord(x+1, y);	
 
-				if (y > 0 && y < game.board.dimensions.y - 1 && (game.board.get_field(Coord(x, y+1)) == 0 /*|| game.board.get_field(Coord(x, y+1)) == 2*/ || game.board.get_field(Coord(x, y+1)) == 4) && (game.board.get_field(Coord(x, y-1)) == 0 || game.board.get_field(Coord(x, y-1)) == 2 || game.board.get_field(Coord(x, y-1)) == 4))
+				if (y > 0 && y < game.board.dimensions.y - 1 && (game.board.get_field(Coord(x, y+1)) == 0 /*|| game.board.get_field(Coord(x, y+1)) == 2*/ || game.board.get_field(Coord(x, y+1)) == 4) && (game.board.get_field(Coord(x, y-1)) == 0 /*|| game.board.get_field(Coord(x, y-1)) == 2*/ || game.board.get_field(Coord(x, y-1)) == 4))
 				{
 					//std::cout << "First\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x, y+1)), e.first) = 1;
 					//std::cout << "Second\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x, y-1)), e.first) = 1;
 				}
-				if (x > 0 && x < game.board.dimensions.x - 1 && (game.board.get_field(Coord(x+1, y)) == 0 /*|| game.board.get_field(Coord(x+1, y)) == 2*/ || game.board.get_field(Coord(x+1, y)) == 4) && (game.board.get_field(Coord(x-1, y)) == 0 || game.board.get_field(Coord(x-1, y)) == 2 || game.board.get_field(Coord(x-1, y)) == 4))
+				if (x > 0 && x < game.board.dimensions.x - 1 && (game.board.get_field(Coord(x+1, y)) == 0 /*|| game.board.get_field(Coord(x+1, y)) == 2*/ || game.board.get_field(Coord(x+1, y)) == 4) && (game.board.get_field(Coord(x-1, y)) == 0 /*|| game.board.get_field(Coord(x-1, y)) == 2*/ || game.board.get_field(Coord(x-1, y)) == 4))
 				{
 					//std::cout << "Third\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x+1, y)), e.first) = 1;
@@ -335,7 +337,7 @@ struct MinCostHeuristic: Heuristic
 				}
 				else
 				{
-					box_goal_adjacency(b, g) = 2147483647;
+					box_goal_adjacency(b, g) = 10000;
 				}				
 			}			
 		}
@@ -396,6 +398,11 @@ struct MinCostHeuristic: Heuristic
 				build_box_goal_adjacency(game);
 				minimum_cost();
 			}
+			// update_box_keys(game);
+			// build_reverse_directed_graph(game);
+			// build_distances_to_goals();
+			// build_box_goal_adjacency(game);
+			// minimum_cost();
 		}
 		if (cost > 2147483646)
 		{
