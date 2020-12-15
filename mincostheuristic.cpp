@@ -64,11 +64,11 @@ struct MinCostHeuristic: Heuristic
 			{
 				key_to_coord.insert({game.board.get_index(Coord(i, j)), Coord(i, j)});
 				coord_to_key.insert({Coord(i, j), game.board.get_index(Coord(i, j))});
-				if (game.board.get_field(Coord(i, j)) == 4)
+				if (game.board.get_field(Coord(i, j)) == 4 || game.board.get_field(Coord(i, j)) == 3)
 				{
 					goal_keys.push_back(coord_to_key.at(Coord(i, j)));
 				}
-				if (game.board.get_field(Coord(i, j)) == 2)
+				if (game.board.get_field(Coord(i, j)) == 2 || game.board.get_field(Coord(i, j)) == 3)
 				{
 					box_keys.push_back(coord_to_key.at(Coord(i, j)));
 				}
@@ -86,7 +86,7 @@ struct MinCostHeuristic: Heuristic
 		{
 			for (int j = 0; j < game.board.dimensions.y; ++j)
 			{
-				if (game.board.get_field(Coord(i, j)) == 2)
+				if (game.board.get_field(Coord(i, j)) == 2 || game.board.get_field(Coord(i, j)) == 3)
 				{
 					new_box_keys.push_back(coord_to_key.at(Coord(i, j)));
 					if (std::find(box_keys.begin(), box_keys.end(), coord_to_key.at(Coord(i, j))) == box_keys.end())
@@ -337,6 +337,11 @@ struct MinCostHeuristic: Heuristic
 			}			
 		}
 		display_box_goal_adjacency();
+	}
+
+	void minimum_cost()
+	{
+
 	}
 
 	double operator()(State &state) {
