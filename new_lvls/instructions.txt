@@ -1,0 +1,10 @@
+There are a few problem instances in this folder - 
+instance 00 is a trivial instance, the others are small to very big, with most in between in terms of complexity.
+
+input__.txt files are meant to visualize the game in a simple text-based format.
+sokoban__.txt is the corresponding problem definition in the format described on class webpage.
+
+From smallest to largest index, problem become increasingly larger and more difficult.
+E.g. sokoban01 is the smallest/easiest with sokoban10 being the largest/most difficult.
+
+Reporting instructions are in the ProjectReportGuide
