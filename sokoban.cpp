@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 	bool simple_heuristic = false;
 
 	// all args after file are optional
-	for(int i = 3; i < argc; i++) {
+	for(int i = 2; i < argc; i++) {
 		char *flag = argv[i];
 		if(strcmp(flag, "--interactive") == 0) {
 			interactive = true;
