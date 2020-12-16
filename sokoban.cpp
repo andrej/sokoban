@@ -103,6 +103,7 @@ int main(int argc, char **argv) {
 	// Non-interactive: Read in file, run algorithm, return
 	if(!interactive) {
 		std::vector<State *> solution = A_star(board, heur);
+		printf("%lu ", solution.size());
 		Game *prev = NULL;
 		for(std::vector<State *>::iterator it = solution.begin(); it != solution.end(); ++it) {
 			Game *current = static_cast<Game *>(*it);
