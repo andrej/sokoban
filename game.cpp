@@ -34,6 +34,12 @@ struct Coord {
 		res.y = this->y + b.y;
 		return res;
 	}
+	Coord operator-(const Coord &b) {
+		Coord res;
+		res.x = this->x - b.x;
+		res.y = this->y - b.y;
+		return res;
+	}
 	bool operator==(const Coord &b) const {
 		return this->x == b.x && this->y == b.y;
 	}
@@ -156,7 +162,7 @@ struct Game : State {
 	bool is_goal() {
 		for(int x = 0; x < this->board.dimensions.x; x++) {
 			for(int y = 0; y < this->board.dimensions.y; y++) {
-				Board::Field field = this->board.get_field((Coord){x, y});
+				Board::Field field = this->board.get_field(Coord(x, y));
 				if(field != Board::empty 
 				   && field != Board::wall
 				   && field != Board::box_on_goal) {
@@ -215,16 +221,16 @@ struct Game : State {
 	bool is_obviously_unsolvable() {
 		for(int x = 0; x < this->board.dimensions.x; x++) {
 			for(int y = 0; y < this->board.dimensions.y; y++) {
-				Coord pos = {x, y};
+				Coord pos(x, y);
 				Board::Field field = this->board.get_field(pos);
 				if(field != Board::box) {
 					continue;
 				}
 				// Box (not in goal) is lodged against corner of walls
-				Board::Field left   = this->board.get_field(pos+(Coord){-1,  0});
-				Board::Field right  = this->board.get_field(pos+(Coord){+1,  0});
-				Board::Field top    = this->board.get_field(pos+(Coord){ 0, -1});
-				Board::Field bottom = this->board.get_field(pos+(Coord){ 0, +1});
+				Board::Field left   = this->board.get_field(pos+Coord(-1,  0));
+				Board::Field right  = this->board.get_field(pos+Coord(+1,  0));
+				Board::Field top    = this->board.get_field(pos+Coord( 0, -1));
+				Board::Field bottom = this->board.get_field(pos+Coord( 0, +1));
 				if((left == Board::wall && top == Board::wall) ||
 				   (left == Board::wall && bottom == Board::wall) ||
 				   (right == Board::wall && top == Board::wall) ||
@@ -241,10 +247,10 @@ struct Game : State {
 	 */
 	std::vector<State *> get_neighbors() {
 		std::vector<State *> neighbors;
-		Coord actions[4] = {(Coord){-1, 0},
-				    (Coord){+1, 0},
-				    (Coord){0, -1},
-				    (Coord){0, +1}};
+		Coord actions[4] = {Coord(-1, 0),
+				    Coord(+1, 0),
+				    Coord(0, -1),
+				    Coord(0, +1)};
 		for(int i = 0; i < 4; i++) {
 			Coord action = actions[i];
 			if(!this->is_action_legal(action)) {

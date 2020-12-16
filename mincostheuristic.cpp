@@ -27,7 +27,7 @@ struct MinCostHeuristic: Heuristic
 	std::map<Coord, int> coord_to_key;
 	std::vector<int> goal_keys;
 	std::vector<int> box_keys;
-	std::vector<std::map<int, int>> distances_to_goals;
+	std::vector<std::map<int, int> > distances_to_goals;
 	matrix<int> box_goal_adjacency;
 	std::map<int, int> goal_graph_to_adj_key;
 	std::map<int, int> box_graph_to_adj_key;
@@ -346,7 +346,7 @@ struct MinCostHeuristic: Heuristic
 
 	void minimum_cost()
 	{
-		std::vector<std::vector<double>> cost_matrix;
+		std::vector<std::vector<double> > cost_matrix;
 		for (unsigned i = 0; i < box_goal_adjacency.size1(); ++i)
 		{
 			std::vector<double> cost_row;

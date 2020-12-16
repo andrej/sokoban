@@ -22,14 +22,14 @@ struct SimpleHeuristic : Heuristic {
 		double box_to_goal = +INFINITY;
 		for(int x0 = 0; x0 < game.board.dimensions.x; x0++) {
 			for(int y0 = 0; y0 < game.board.dimensions.y; y0++) {
-				Coord pos1 = {x0, y0};
+				Coord pos1(x0, y0);
 				Board::Field field1 = game.board.get_field(pos1);
 				if(field1 != Board::box) {
 					continue;
 				}
 				for(int x1 = 0; x1 < game.board.dimensions.x; x1++) {
 					for(int y1 = 0; y1 < game.board.dimensions.y; y1++) {
-						Coord pos2 = {x1, y1};
+						Coord pos2(x1, y1);
 						if(pos1 == pos2) {
 							continue;
 						}

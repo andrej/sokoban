@@ -123,7 +123,7 @@ std::vector<State *> A_star(State &start, Heuristic &heuristic) {
 				if(h <= best) {
 					best = h;
 					char *viz = board_to_string(*static_cast<Game *>(neighbor));
-					printf("%f\n%s\n", best, viz);
+					fprintf(stderr, "Current best found state: %f\n%s\n", best, viz);
 				}
 				predecessor[neighbor] = current;
 				g[neighbor] = tentative_g;
@@ -140,6 +140,7 @@ std::vector<State *> A_star(State &start, Heuristic &heuristic) {
 			out.push_back(goal);
 			goal = predecessor[goal];
 		} while(predecessor.count(goal));
+		out.push_back(&start);
 		std::reverse(out.begin(), out.end());
 	}
 	return out;

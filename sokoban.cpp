@@ -47,56 +47,100 @@ int action_input(Coord *action) {
 }
 
 /**
+ * Translate "difference" between two states into action taken: up, down, left
+ * or right.
+ */
+char action_to_char(Game *from, Game *to) {
+	Coord offs = to->player - from->player;
+	if(offs.x == -1) {
+		return 'L';
+	} else if(offs.x == +1) {
+		return 'R';
+	} else if(offs.y == -1) {
+		return 'U';
+	} else if(offs.y == +1) {
+		return 'D';
+	}
+	return '?';
+}
+
+/**
+ * Usage information / help
+ */
+int print_usage(char *name) {
+	fprintf(stderr, "Usage: %s LEVEL [--interactive]\n", name);
+	fprintf(stderr, "    LEVEL: Path to Sokoban level text file.\n");
+	fprintf(stderr, "    --interactive: Play in interactive mode.\n");
+	return 1;
+}
+
+/**
  * Main
  */
-#define MAX_MOVES 4095
 int main(int argc, char **argv) {
 
 	// Print usage info.
-	if(argc != 2) {
-		fprintf(stderr, "Usage: %s LEVEL\n", argv[0]);
-		fprintf(stderr, "    LEVEL: Path to Sokoban level text file.");
-		return 1;
+	if(argc < 2 || argc > 3) {
+		return print_usage(argv[0]);
+	}
+
+	bool interactive = false;
+	if(argc == 3) {
+		if(strcmp(argv[2], "--interactive") == 0) {
+			interactive = true;
+		} else {
+			return print_usage(argv[0]);
+		}
 	}
 
 	// Read in level to a new board.
 	char *path = argv[1];
 	Game board = board_from_file(path);
 
-	// Keep track of moves made to show in the end.
-	unsigned int n_moves = 0;
-	char moves[MAX_MOVES+1];
 
 	MinCostHeuristic heur;
+
+	// Non-interactive: Read in file, run algorithm, return
+	if(!interactive) {
+		std::vector<State *> solution = A_star(board, heur);
+		Game *prev = NULL;
+		for(std::vector<State *>::iterator it = solution.begin(); it != solution.end(); ++it) {
+			Game *current = static_cast<Game *>(*it);
+			if(!prev) {
+				prev = current;
+				continue;
+			}
+			char action = action_to_char(prev, current);
+			putchar(action);
+			putchar(' ');
+			prev = current;
+		}
+		putchar('\n');
+		return 0;
+	}
+
+	unsigned int n_moves = 0;
 
 	// Main loop: repeatedly show game board, ask user for a move, apply
 	// the move to the board state, check if goal state reached, then 
 	// visualize board again.
-	while(n_moves < MAX_MOVES) {
+	while(true) {
 		char *viz = board_to_string(board);
 		double h = heur(board);
-		printf("\nh(x) = %f\n%s\n", h, viz);
+		printf("\n%s\nh(x) = %f\n\n", viz, h);
 		if(board.is_goal()) {
-			printf("Congratulations! You won after %d moves:\n%s\n",
-				n_moves, moves);
+			fprintf(stderr, "Congratulations! You won after %d moves.\n", n_moves);
 			break;
 		}
 		int input;
 		Coord action;
 		do {
-			// Repeatedly ask user for a move until they make a 
-			// legal one or quit the game.
-			std::vector<State *> children = board.get_neighbors();
-			printf("Available moves: \n");
-			for(int i = 0; i < children.size(); i++) {
-				printf("%d: %d\n", i, children[i]->is_goal());
-			}
-			printf("[%d] Make a move (w=up, a=left, s=down, d=right, q=quit): ", n_moves);
+			// Repeatedly ask user for a move until they make a legal one or quit the game.
+			fprintf(stderr, "[%d] Make a move (x=run solver, w=up, a=left, s=down, d=right, q=quit): ", n_moves);
 			input = action_input(&action);
-			printf("\n");
+			fprintf(stderr, "\n");
 			if(input == 'q') {
-				printf("You gave up after %d moves:\n%s\nGoodbye.\n",
-				       n_moves, moves);
+				fprintf(stderr, "You gave up after %d moves. Goodbye.\n", n_moves);
 				return 1;
 			}
 			if(input == 'x') {
@@ -105,19 +149,14 @@ int main(int argc, char **argv) {
 				for(std::vector<State *>::iterator it = solution.begin(); it != solution.end(); ++it) {
 					Game *step = static_cast<Game *>(*it);
 					char *viz = board_to_string(*step);
-					printf("%d\n%s\n", j, viz);
+					fprintf(stderr, "Solution step %d:\n%s\n", j+1, viz);
 					j++;
 				}
 				return 2;
 			}
-			if(!board.is_action_legal(action)) {
-				printf("Illegal action. Please retry.\n");
-			}
 		} while(!board.is_action_legal(action));
-		moves[n_moves] = (char)input;
 		n_moves += 1;
-		moves[n_moves] = '\0';
 		board.take_action(action);
-	};
+	}
 	return 0;
 }
