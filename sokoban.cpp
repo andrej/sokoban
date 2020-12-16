@@ -68,9 +68,10 @@ char action_to_char(Game *from, Game *to) {
  * Usage information / help
  */
 int print_usage(char *name) {
-	fprintf(stderr, "Usage: %s LEVEL [--interactive]\n", name);
+	fprintf(stderr, "Usage: %s LEVEL [--interactive] [--simple]\n", name);
 	fprintf(stderr, "    LEVEL: Path to Sokoban level text file.\n");
 	fprintf(stderr, "    --interactive: Play in interactive mode.\n");
+	fprintf(stderr, "    --simple: Use simple heuristic (for performance comparison).\n");
 	return 1;
 }
 
@@ -80,14 +81,20 @@ int print_usage(char *name) {
 int main(int argc, char **argv) {
 
 	// Print usage info.
-	if(argc < 2 || argc > 3) {
+	if(argc < 2) {
 		return print_usage(argv[0]);
 	}
 
 	bool interactive = false;
-	if(argc == 3) {
-		if(strcmp(argv[2], "--interactive") == 0) {
+	bool simple_heuristic = false;
+
+	// all args after file are optional
+	for(int i = 3; i < argc; i++) {
+		char *flag = argv[i];
+		if(strcmp(flag, "--interactive") == 0) {
 			interactive = true;
+		} else if(strcmp(flag, "--simple") == 0) {
+			simple_heuristic = true;
 		} else {
 			return print_usage(argv[0]);
 		}
@@ -97,12 +104,16 @@ int main(int argc, char **argv) {
 	char *path = argv[1];
 	Game board = board_from_file(path);
 
-
-	MinCostHeuristic heur;
+	Heuristic *heuristic;
+	if(simple_heuristic) {
+		heuristic = new SimpleHeuristic();
+	} else {
+		heuristic = new MinCostHeuristic();
+	}
 
 	// Non-interactive: Read in file, run algorithm, return
 	if(!interactive) {
-		std::vector<State *> solution = A_star(board, heur);
+		std::vector<State *> solution = A_star(board, *heuristic);
 		printf("%lu ", solution.size());
 		Game *prev = NULL;
 		for(std::vector<State *>::iterator it = solution.begin(); it != solution.end(); ++it) {
@@ -127,7 +138,7 @@ int main(int argc, char **argv) {
 	// visualize board again.
 	while(true) {
 		char *viz = board_to_string(board);
-		double h = heur(board);
+		double h = (*heuristic)(board);
 		printf("\n%s\nh(x) = %f\n\n", viz, h);
 		if(board.is_goal()) {
 			fprintf(stderr, "Congratulations! You won after %d moves.\n", n_moves);
@@ -145,7 +156,7 @@ int main(int argc, char **argv) {
 				return 1;
 			}
 			if(input == 'x') {
-				std::vector<State *> solution = A_star(board, heur);
+				std::vector<State *> solution = A_star(board, *heuristic);
 				int j = 0;
 				for(std::vector<State *>::iterator it = solution.begin(); it != solution.end(); ++it) {
 					Game *step = static_cast<Game *>(*it);
