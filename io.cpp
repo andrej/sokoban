@@ -199,14 +199,23 @@ int board_from_new_fmt_string(char *str, Game *state) {
 /**
  * Read a file and parse it as a board.
  */
-#define MAX_FILE_SIZE 4095
 Game board_from_file(char *path, bool old_fmt = false) {
 	FILE *fp = fopen(path, "r");
 	assert(fp != NULL);
-	char *str = new char[MAX_FILE_SIZE+1];
-	int len = fread(str, sizeof(char), MAX_FILE_SIZE, fp);
+
+	// Find file size
+	fseek(fp, 0, SEEK_END);
+	size_t size = ftell(fp);
+	rewind(fp);
+
+
+	// Read file to string
+	char *str = new char[size+1];
+	int len = fread(str, sizeof(char), size, fp);
 	fclose(fp);
 	str[len] = '\0';
+
+	// Parse string
 	Game board;
 	int success;
 	if(old_fmt) {
@@ -215,7 +224,8 @@ Game board_from_file(char *path, bool old_fmt = false) {
 		success = board_from_new_fmt_string(str, &board);
 	}
 	assert(success == 0); // TODO better error handling
-	//free(str);
+
+	free(str);
 	return board;
 }
 
