@@ -162,14 +162,14 @@ struct MinCostHeuristic: Heuristic
 				//Coord left = Coord(x-1, y);
 				//Coord right = Coord(x+1, y);	
 
-				if (y > 0 && y < game.board.dimensions.y - 1 && (game.board.get_field(Coord(x, y+1)) == 0 /*|| game.board.get_field(Coord(x, y+1)) == 2*/ || game.board.get_field(Coord(x, y+1)) == 4) && (game.board.get_field(Coord(x, y-1)) == 0 /*|| game.board.get_field(Coord(x, y-1)) == 2*/ || game.board.get_field(Coord(x, y-1)) == 4))
+				if (y > 0 && y < game.board.dimensions.y - 1 && (game.board.get_field(Coord(x, y+1)) == 0 || game.board.get_field(Coord(x, y+1)) == 2 || game.board.get_field(Coord(x, y+1)) == 4) && (game.board.get_field(Coord(x, y-1)) == 0 || game.board.get_field(Coord(x, y-1)) == 2 || game.board.get_field(Coord(x, y-1)) == 4))
 				{
 					//std::cout << "First\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x, y+1)), e.first) = 1;
 					//std::cout << "Second\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x, y-1)), e.first) = 1;
 				}
-				if (x > 0 && x < game.board.dimensions.x - 1 && (game.board.get_field(Coord(x+1, y)) == 0 /*|| game.board.get_field(Coord(x+1, y)) == 2*/ || game.board.get_field(Coord(x+1, y)) == 4) && (game.board.get_field(Coord(x-1, y)) == 0 /*|| game.board.get_field(Coord(x-1, y)) == 2*/ || game.board.get_field(Coord(x-1, y)) == 4))
+				if (x > 0 && x < game.board.dimensions.x - 1 && (game.board.get_field(Coord(x+1, y)) == 0 || game.board.get_field(Coord(x+1, y)) == 2 || game.board.get_field(Coord(x+1, y)) == 4) && (game.board.get_field(Coord(x-1, y)) == 0 || game.board.get_field(Coord(x-1, y)) == 2 || game.board.get_field(Coord(x-1, y)) == 4))
 				{
 					//std::cout << "Third\n";
 					reverse_directed_graph(coord_to_key.at(Coord(x+1, y)), e.first) = 1;
