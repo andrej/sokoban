@@ -91,20 +91,26 @@ struct PointerSet {
 /**
  * A* search. Returns an array of actions to take, starting from initial state
  * to reach a goal state.
+ * 
+ * The implementation currently assumes that the State given is actually a
+ * Sokoban state, i.e. of type "Game". With some modifications, it should be
+ * easy to make it work with arbitrary game states.
  */
-std::vector<State *> A_star(State &start, Heuristic &heuristic) {
+std::vector<State *> A_star(State &start, Heuristic &heuristic, bool verbose = true) {
 
 	boost::heap::fibonacci_heap<PrioritizedState> todo;  // Nodes to be visited
 	PointerSet<Game> visited; // Set of all visited nodes
 	std::unordered_map<State *, State *> predecessor;  // Predecessor on shortest path to given state
 	std::unordered_map<State *, double> g; // g: Cost of shortest path to State
 	State *goal = NULL;
+	unsigned long iteration = 0;
 
 	g[&start] = 0;
 	todo.push(PrioritizedState(heuristic(start), &start));
 	double best = +INFINITY;
 
 	while(!todo.empty()) {
+		iteration++;
 		PrioritizedState prio_current = todo.top();
 		todo.pop();
 		State *current = prio_current.state;
@@ -122,8 +128,10 @@ std::vector<State *> A_star(State &start, Heuristic &heuristic) {
 				double h = heuristic(*neighbor);
 				if(h <= best) {
 					best = h;
-					char *viz = board_to_string(*static_cast<Game *>(neighbor));
-					fprintf(stderr, "Current best found state: %f\n%s\n", best, viz);
+					if(verbose) {
+						char *viz = board_to_string(*static_cast<Game *>(neighbor));
+						fprintf(stderr, "Iteration #%lu\nBest found state: %f\n%s\n", iteration, best, viz);
+					}
 				}
 				predecessor[neighbor] = current;
 				g[neighbor] = tentative_g;
@@ -131,7 +139,6 @@ std::vector<State *> A_star(State &start, Heuristic &heuristic) {
 				todo.push(PrioritizedState(f, neighbor));
 			}
 		}
-		//delete current;
 	}
 
 	std::vector<State *> out;

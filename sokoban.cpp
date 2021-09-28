@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <unistd.h>
 #include <cstdbool>
 #include <cstring>
 #include <cassert>
@@ -15,6 +16,13 @@
 /** 
  * Game of Sokoban
  *
+ * Reads a sokoban level file as input and outputs steps (moves) to solve the
+ * level. Alternatively, using the -p option, the level can be played 
+ * interactively by the user.
+ * 
+ * The first drafted implementation was done in C, hence most of this does not
+ * make use of C++ language features.
+ * 
  * (c) 2020 André Rösti
  */
 
@@ -68,11 +76,25 @@ char action_to_char(Game *from, Game *to) {
  * Usage information / help
  */
 int print_usage(char *name) {
-	fprintf(stderr, "Usage: %s LEVEL [--interactive] [--simple]\n", name);
+	fprintf(stderr, "Usage: %s LEVEL [-p] [-s] [-v] [-r] [-l]\n", name);
 	fprintf(stderr, "    LEVEL: Path to Sokoban level text file.\n");
-	fprintf(stderr, "    --interactive: Play in interactive mode.\n");
-	fprintf(stderr, "    --simple: Use simple heuristic (for performance comparison).\n");
+	fprintf(stderr, "    -p: Play in interactive mode.\n");
+	fprintf(stderr, "    -s: Use simple heuristic (for performance comparison).\n");
+	fprintf(stderr, "    -v, -vv: Print (very) verbose output to stderr.\n");
+	fprintf(stderr, "    -r: Replay solution after it has been found\n");
+	fprintf(stderr, "    -l: Use alternative visual input format.\n");
 	return 1;
+}
+
+/**
+ * Replay solution
+ */
+void replay_solution(std::vector<State *> solution) {
+	for(std::vector<State *>::iterator it = solution.begin(); it != solution.end(); ++it) {
+		fprintf(stderr, "%s\n\n", board_to_string(*static_cast<Game *>(*it)));
+		fflush(stderr);
+		usleep(150000);
+	}
 }
 
 /**
@@ -87,22 +109,39 @@ int main(int argc, char **argv) {
 
 	bool interactive = false;
 	bool simple_heuristic = false;
+	bool replay = false;
+	bool old_fmt = false;
+	int verbosity = 0;
 
-	// all args after file are optional
-	for(int i = 2; i < argc; i++) {
-		char *flag = argv[i];
-		if(strcmp(flag, "--interactive") == 0) {
-			interactive = true;
-		} else if(strcmp(flag, "--simple") == 0) {
-			simple_heuristic = true;
-		} else {
-			return print_usage(argv[0]);
+	// all args except for file are optional
+	int opt;
+	while((opt = getopt(argc, argv, "lpsvr")) != -1) {
+		switch(opt) {
+			case 'p':
+				interactive = true;
+				break;
+			case 's':
+				simple_heuristic = true;
+				break;
+			case 'r':
+				replay = true;
+				break;
+			case 'v':
+				verbosity++;
+				break;
+			case 'l':
+				old_fmt = true;
+				break;
 		}
 	}
 
+	if(optind >= argc) {
+		print_usage(argv[0]);
+	}
+
 	// Read in level to a new board.
-	char *path = argv[1];
-	Game board = board_from_file(path);
+	char *path = argv[optind];
+	Game board = board_from_file(path, old_fmt);
 
 	Heuristic *heuristic;
 	if(simple_heuristic) {
@@ -113,7 +152,10 @@ int main(int argc, char **argv) {
 
 	// Non-interactive: Read in file, run algorithm, return
 	if(!interactive) {
-		std::vector<State *> solution = A_star(board, *heuristic);
+		std::vector<State *> solution = A_star(board, *heuristic, verbosity > 1);
+		if(verbosity > 0) {
+			fprintf(stderr, "Solution found:\n");
+		}
 		printf("%lu ", solution.size());
 		Game *prev = NULL;
 		for(std::vector<State *>::iterator it = solution.begin(); it != solution.end(); ++it) {
@@ -128,11 +170,17 @@ int main(int argc, char **argv) {
 			prev = current;
 		}
 		putchar('\n');
+		if(replay) {
+			fprintf(stderr, "\nSolution replay:\n");
+			usleep(2000000);
+			replay_solution(solution);
+		}
 		return 0;
 	}
 
 	unsigned int n_moves = 0;
 
+	// Interactive
 	// Main loop: repeatedly show game board, ask user for a move, apply
 	// the move to the board state, check if goal state reached, then 
 	// visualize board again.
